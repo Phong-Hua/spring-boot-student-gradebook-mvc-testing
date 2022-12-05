@@ -1,4 +1,4 @@
-tepackage com.luv2code.springmvc;
+package com.luv2code.springmvc;
 
 import com.luv2code.springmvc.models.CollegeStudent;
 import com.luv2code.springmvc.models.GradebookCollegeStudent;
@@ -22,13 +22,14 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.web.servlet.ModelAndView;
 
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import static org.mockito.Mockito.when;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @TestPropertySource("/application.properties")
@@ -120,5 +121,35 @@ public class GradebookControllerTest {
 
         // verify in db
         assertNotNull(studentDao.findByEmailAddress("chad.darby@luv2code.com"));
+    }
+
+    @Test
+    public void deleteStudentHttpRequest() throws Exception {
+
+        // Make sure the studentId exist first
+        assertTrue(studentDao.findById(1).isPresent());
+
+        MvcResult mvcResult = this.mockMvc.perform(
+                get("/delete/student/{id}", 1))
+                .andExpect(status().isOk()).andReturn();
+
+        ModelAndView mav = mvcResult.getModelAndView();
+        ModelAndViewAssert.assertViewName(mav, "index");
+
+        assertFalse(studentDao.findById(1).isPresent());
+    }
+
+    @Test
+    public void deleteStudentHttpRequestErrorPage() throws Exception {
+
+        assertTrue(studentDao.findById(2).isEmpty());
+
+        MvcResult mvcResult = this.mockMvc.perform(
+                get("/delete/student/{id}", 2))
+                .andExpect(status().isOk()).andReturn();
+
+        ModelAndView mav = mvcResult.getModelAndView();
+        ModelAndViewAssert.assertViewName(mav, "error");
+
     }
 }
