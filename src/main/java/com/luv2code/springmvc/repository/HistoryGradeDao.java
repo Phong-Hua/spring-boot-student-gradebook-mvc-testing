@@ -8,4 +8,5 @@ import org.springframework.stereotype.Repository;
 public interface HistoryGradeDao extends CrudRepository<HistoryGrade, Integer> {
 
     public Iterable<HistoryGrade> findGradeByStudentId(int id);
+    public void deleteByStudentId(int id);
 }

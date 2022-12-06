@@ -80,11 +80,29 @@ public class StudentAndGradeServiceTest {
     public void deleteStudentService() {
 
         Optional<CollegeStudent> studentOptional = studentDao.findById(1);
-        assertTrue(studentOptional.isPresent());
+        Iterable<MathGrade> deleteMathGrade = mathGradeDao.findGradeByStudentId(1);
+        Iterable<HistoryGrade> deleteHistoryGrade = historyGradeDao.findGradeByStudentId(1);
+        Iterable<ScienceGrade> deleteScienceGrade = scienceGradeDao.findGradeByStudentId(1);
 
+        assertTrue(studentOptional.isPresent());
+        // assert grades link to student
+        assertTrue(deleteMathGrade.iterator().hasNext(), "Student has math grades");
+        assertTrue(deleteHistoryGrade.iterator().hasNext(), "Student has history grades");
+        assertTrue(deleteScienceGrade.iterator().hasNext(), "Student has science grades");
+
+        // delete student
         studentService.deleteStudent(1);
         studentOptional = studentDao.findById(1);
+
+        deleteMathGrade = mathGradeDao.findGradeByStudentId(1);
+        deleteHistoryGrade = historyGradeDao.findGradeByStudentId(1);
+        deleteScienceGrade = scienceGradeDao.findGradeByStudentId(1);
+
         assertTrue(studentOptional.isEmpty(), "Delete student");
+
+        assertFalse(deleteMathGrade.iterator().hasNext(), "Math grades are deleted");
+        assertFalse(deleteHistoryGrade.iterator().hasNext(), "History grades are deleted");
+        assertFalse(deleteScienceGrade.iterator().hasNext(), "Science grades are deleted");
     }
 
     @Sql("/sql/insert.sql") // run the sql script at this location for this test. This will run after @BeforeEach and before run the test
