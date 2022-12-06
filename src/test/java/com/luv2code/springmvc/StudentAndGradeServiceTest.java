@@ -1,6 +1,12 @@
 package com.luv2code.springmvc;
 
 import com.luv2code.springmvc.models.CollegeStudent;
+import com.luv2code.springmvc.models.HistoryGrade;
+import com.luv2code.springmvc.models.MathGrade;
+import com.luv2code.springmvc.models.ScienceGrade;
+import com.luv2code.springmvc.repository.HistoryGradeDao;
+import com.luv2code.springmvc.repository.MathGradeDao;
+import com.luv2code.springmvc.repository.ScienceGradeDao;
 import com.luv2code.springmvc.repository.StudentDao;
 import com.luv2code.springmvc.service.StudentAndGradeService;
 import org.junit.jupiter.api.AfterEach;
@@ -13,6 +19,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,7 +33,12 @@ public class StudentAndGradeServiceTest {
     StudentDao studentDao;
     @Autowired
     StudentAndGradeService studentService;
-
+    @Autowired
+    MathGradeDao mathGradeDao;
+    @Autowired
+    ScienceGradeDao scienceGradeDao;
+    @Autowired
+    HistoryGradeDao historyGradeDao;
     @Autowired
     private JdbcTemplate jdbc;  // JdbcTemplate is a helper class provided by Spring to help execute JDBC operations
 
@@ -34,11 +46,19 @@ public class StudentAndGradeServiceTest {
     public void setupDatabase() {
         jdbc.execute("INSERT INTO student(id, firstname, lastname, email_address)" +
                 "VALUES(1, 'Rick', 'Norman', 'rick.norman@luv2code.com')");
+
+        jdbc.execute("INSERT INTO math_grade(id, student_id, grade) VALUES(1, 1, 100.0)");
+        jdbc.execute("INSERT INTO science_grade(id, student_id, grade) VALUES(1, 1, 100.0)");
+        jdbc.execute("INSERT INTO history_grade(id, student_id, grade) VALUES(1, 1, 100.0)");
+
     }
 
     @AfterEach
     public void cleanupDatabase() {
         jdbc.execute("DELETE FROM student;");
+        jdbc.execute("DELETE FROM math_grade;");
+        jdbc.execute("DELETE FROM science_grade;");
+        jdbc.execute("DELETE FROM history_grade;");
     }
 
     @Test
@@ -76,5 +96,34 @@ public class StudentAndGradeServiceTest {
         iterableCollegeStudents.forEach(collegeStudents::add);
 
         assertEquals(4, collegeStudents.size());
+    }
+
+    @Test
+    public void createGradeService() {
+
+        // Create a grade
+        assertTrue(studentService.createGrade(80.5, 1, "math"));
+        assertTrue(studentService.createGrade(90.5, 1, "science"));
+        assertTrue(studentService.createGrade(88.0, 1, "history"));
+
+        // Get all grades with studentId
+        Iterable<MathGrade> mathGrades = mathGradeDao.findGradeByStudentId(1);
+        Iterable<ScienceGrade> scienceGrades = scienceGradeDao.findGradeByStudentId(1);
+        Iterable<HistoryGrade> historyGrades = historyGradeDao.findGradeByStudentId(1);
+
+        // verify there is grades
+        assertEquals(((Collection<MathGrade>) mathGrades).size(), 2, "Student has math grades");
+        assertEquals(((Collection<ScienceGrade>) scienceGrades).size(), 2, "Student has science grades");
+        assertEquals(((Collection<HistoryGrade>) historyGrades).size(), 2, "Student has history grades");
+
+    }
+
+    @Test
+    public void createGradeServiceReturnFalse() {
+
+        assertFalse(studentService.createGrade(105, 1, "math"), "Grade is bigger than 100");
+        assertFalse(studentService.createGrade(-5, 1, "math"), "Grade is negative");
+        assertFalse(studentService.createGrade(80.5, 2, "math"), "Student does not exist");
+        assertFalse(studentService.createGrade(80.5, 1, "literature"), "Grade type is invalid");
     }
 }
