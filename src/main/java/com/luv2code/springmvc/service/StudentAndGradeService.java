@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 @Service
 @Transactional  // Allows SpringBoot manage transaction for us in the background
 public class StudentAndGradeService {
@@ -85,5 +87,30 @@ public class StudentAndGradeService {
             }
         }
         return false;
+    }
+
+    public int deleteGrade(int gradeId, String type) {
+        int studentId = 0;
+
+        if (type.equals("math")) {
+            Optional<MathGrade> gradeOptional = mathGradeDao.findById(gradeId);
+            if (gradeOptional.isPresent()) {
+                studentId = gradeOptional.get().getStudentId();
+                mathGradeDao.deleteById(gradeId);
+            }
+        } else if (type.equals("history")){
+            Optional<HistoryGrade> gradeOptional = historyGradeDao.findById(gradeId);
+            if (gradeOptional.isPresent()) {
+                studentId = gradeOptional.get().getStudentId();
+                historyGradeDao.deleteById(gradeId);
+            }
+        } else if (type.equals("science")){
+            Optional<ScienceGrade> gradeOptional = scienceGradeDao.findById(gradeId);
+            if (gradeOptional.isPresent()) {
+                studentId = gradeOptional.get().getStudentId();
+                scienceGradeDao.deleteById(gradeId);
+            }
+        }
+        return studentId;
     }
 }

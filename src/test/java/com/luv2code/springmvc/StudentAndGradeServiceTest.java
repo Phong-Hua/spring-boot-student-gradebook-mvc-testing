@@ -126,4 +126,23 @@ public class StudentAndGradeServiceTest {
         assertFalse(studentService.createGrade(80.5, 2, "math"), "Student does not exist");
         assertFalse(studentService.createGrade(80.5, 1, "literature"), "Grade type is invalid");
     }
+
+    @Test
+    public void deleteGradeService() {
+        assertEquals(1, studentService.deleteGrade(1, "math"), "Return student id after delete math grade");
+        assertEquals(1, studentService.deleteGrade(1, "history"), "Return student id after delete history grade");
+        assertEquals(1, studentService.deleteGrade(1, "science"), "Return student id after delete science grade");
+    }
+
+    @Test
+    public void deleteGradeServiceReturnStudentIdOfZero() {
+        // delete invalid grade id
+        assertEquals(0, studentService.deleteGrade(0, "math"), "No student should have math grade id of 0");
+        assertEquals(0, studentService.deleteGrade(0, "science"), "No student should have science grade id of 0");
+        assertEquals(0, studentService.deleteGrade(0, "history"), "No student should have history grade id of 0");
+
+        // delete invalid grade type
+        assertEquals(0, studentService.deleteGrade(1, "literature"), "No student should have literature class");
+
+    }
 }
