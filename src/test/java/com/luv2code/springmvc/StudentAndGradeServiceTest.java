@@ -1,9 +1,6 @@
 package com.luv2code.springmvc;
 
-import com.luv2code.springmvc.models.CollegeStudent;
-import com.luv2code.springmvc.models.HistoryGrade;
-import com.luv2code.springmvc.models.MathGrade;
-import com.luv2code.springmvc.models.ScienceGrade;
+import com.luv2code.springmvc.models.*;
 import com.luv2code.springmvc.repository.HistoryGradeDao;
 import com.luv2code.springmvc.repository.MathGradeDao;
 import com.luv2code.springmvc.repository.ScienceGradeDao;
@@ -13,6 +10,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.TestPropertySource;
@@ -42,23 +40,46 @@ public class StudentAndGradeServiceTest {
     @Autowired
     private JdbcTemplate jdbc;  // JdbcTemplate is a helper class provided by Spring to help execute JDBC operations
 
+    @Value("${sql.script.insert.student}")
+    private String sqlInsertStudent;
+
+    @Value("${sql.script.delete.student}")
+    private String sqlDeleteStudent;
+
+    @Value("${sql.script.insert.math.grade}")
+    private String sqlInsertMathGrade;
+
+    @Value("${sql.script.delete.math.grade}")
+    private String sqlDeleteMathGrade;
+
+    @Value("${sql.script.insert.science.grade}")
+    private String sqlInsertScienceGrade;
+
+    @Value("${sql.script.delete.science.grade}")
+    private String sqlDeleteScienceGrade;
+
+    @Value("${sql.script.insert.history.grade}")
+    private String sqlInsertHistoryGrade;
+
+    @Value("${sql.script.delete.history.grade}")
+    private String sqlDeleteHistoryGrade;
+
     @BeforeEach
     public void setupDatabase() {
-        jdbc.execute("INSERT INTO student(id, firstname, lastname, email_address)" +
-                "VALUES(1, 'Rick', 'Norman', 'rick.norman@luv2code.com')");
 
-        jdbc.execute("INSERT INTO math_grade(id, student_id, grade) VALUES(1, 1, 100.0)");
-        jdbc.execute("INSERT INTO science_grade(id, student_id, grade) VALUES(1, 1, 100.0)");
-        jdbc.execute("INSERT INTO history_grade(id, student_id, grade) VALUES(1, 1, 100.0)");
+        jdbc.execute(sqlInsertStudent);
+        jdbc.execute(sqlInsertMathGrade);
+        jdbc.execute(sqlInsertScienceGrade);
+        jdbc.execute(sqlInsertHistoryGrade);
 
     }
 
     @AfterEach
     public void cleanupDatabase() {
-        jdbc.execute("DELETE FROM student;");
-        jdbc.execute("DELETE FROM math_grade;");
-        jdbc.execute("DELETE FROM science_grade;");
-        jdbc.execute("DELETE FROM history_grade;");
+        jdbc.execute(sqlDeleteStudent);
+        jdbc.execute(sqlDeleteMathGrade);
+        jdbc.execute(sqlDeleteScienceGrade);
+        jdbc.execute(sqlDeleteHistoryGrade);
     }
 
     @Test
@@ -162,5 +183,28 @@ public class StudentAndGradeServiceTest {
         // delete invalid grade type
         assertEquals(0, studentService.deleteGrade(1, "literature"), "No student should have literature class");
 
+    }
+
+    @Test
+    public void studentInformation(){
+
+        GradebookCollegeStudent gradebookCollegeStudent = studentService.studentInformation(1);
+        assertNotNull(gradebookCollegeStudent);
+        assertEquals(1, gradebookCollegeStudent.getId());
+        assertEquals("Rick", gradebookCollegeStudent.getFirstname());
+        assertEquals("Norman", gradebookCollegeStudent.getLastname());
+        assertEquals("rick.norman@luv2code.com", gradebookCollegeStudent.getEmailAddress());
+
+        StudentGrades studentGrades = gradebookCollegeStudent.getStudentGrades();
+        assertNotNull(studentGrades);
+        assertEquals(1, studentGrades.getMathGradeResults().size());
+        assertEquals(1, studentGrades.getHistoryGradeResults().size());
+        assertEquals(1, studentGrades.getScienceGradeResults().size());
+    }
+
+    @Test
+    public void studentInformationNotFound(){
+        GradebookCollegeStudent gradebookCollegeStudent = studentService.studentInformation(0);
+        assertNull(gradebookCollegeStudent, "Student not found");
     }
 }

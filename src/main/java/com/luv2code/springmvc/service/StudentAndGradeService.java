@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -39,6 +41,9 @@ public class StudentAndGradeService {
     @Autowired
     @Qualifier("historyGrades")
     private HistoryGrade historyGrade;
+
+    @Autowired
+    private StudentGrades studentGrades;
 
     public void createStudent(String firstname, String lastname, String email) {
         CollegeStudent student = new CollegeStudent(firstname, lastname, email);
@@ -117,5 +122,30 @@ public class StudentAndGradeService {
             }
         }
         return studentId;
+    }
+
+    public GradebookCollegeStudent studentInformation(int studentId) {
+        Optional<CollegeStudent> studentOptional = studentDao.findById(studentId);
+        if (studentOptional.isEmpty())
+            return null;
+        CollegeStudent student = studentOptional.get();
+        Iterable<MathGrade> mathGradesIter = mathGradeDao.findGradeByStudentId(studentId);
+        Iterable<ScienceGrade> scienceGradesIter = scienceGradeDao.findGradeByStudentId(studentId);
+        Iterable<HistoryGrade> historyGradesIter = historyGradeDao.findGradeByStudentId(studentId);
+        List<Grade> mathGrades = new ArrayList<>();
+        List<Grade> historyGrades = new ArrayList<>();
+        List<Grade> scienceGrades = new ArrayList<>();
+        mathGradesIter.forEach(mathGrades::add);
+        scienceGradesIter.forEach(scienceGrades::add);
+        historyGradesIter.forEach(historyGrades::add);
+
+        studentGrades.setMathGradeResults(mathGrades);
+        studentGrades.setHistoryGradeResults(historyGrades);
+        studentGrades.setScienceGradeResults(scienceGrades);
+
+        GradebookCollegeStudent gradebookCollegeStudent = new GradebookCollegeStudent(student.getId(), student.getFirstname(),
+                student.getLastname(), student.getEmailAddress(), studentGrades);
+
+        return gradebookCollegeStudent;
     }
 }
