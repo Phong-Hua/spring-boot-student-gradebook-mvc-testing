@@ -58,6 +58,24 @@ public class GradebookControllerTest {
     @Value("${sql.script.delete.student}")
     private String sqlDeleteStudent;
 
+    @Value("${sql.script.insert.math.grade}")
+    private String sqlInsertMathGrade;
+
+    @Value("${sql.script.delete.math.grade}")
+    private String sqlDeleteMathGrade;
+
+    @Value("${sql.script.insert.science.grade}")
+    private String sqlInsertScienceGrade;
+
+    @Value("${sql.script.delete.science.grade}")
+    private String sqlDeleteScienceGrade;
+
+    @Value("${sql.script.insert.history.grade}")
+    private String sqlInsertHistoryGrade;
+
+    @Value("${sql.script.delete.history.grade}")
+    private String sqlDeleteHistoryGrade;
+
     @BeforeAll
     public static void setup() {
         request = new MockHttpServletRequest();
@@ -69,11 +87,17 @@ public class GradebookControllerTest {
     @BeforeEach
     public void beforeEach() {
         jdbc.execute(sqlInsertStudent);
+        jdbc.execute(sqlInsertMathGrade);
+        jdbc.execute(sqlInsertScienceGrade);
+        jdbc.execute(sqlInsertHistoryGrade);
     }
 
     @AfterEach
     public void cleanupDatabase() {
         jdbc.execute(sqlDeleteStudent);
+        jdbc.execute(sqlDeleteMathGrade);
+        jdbc.execute(sqlDeleteScienceGrade);
+        jdbc.execute(sqlDeleteHistoryGrade);
     }
 
     /**
@@ -157,5 +181,35 @@ public class GradebookControllerTest {
         ModelAndView mav = mvcResult.getModelAndView();
         ModelAndViewAssert.assertViewName(mav, "error");
 
+    }
+
+    @Test
+    public void studentInformationHttpRequest() throws Exception {
+
+        assertTrue(studentDao.findById(1).isPresent(), "Ensure student exist before test");
+
+        MvcResult mvcResult = this.mockMvc.perform(
+                get("/studentInformation/{id}", 1))
+                .andExpect(status().isOk()).andReturn();
+
+        ModelAndView mav = mvcResult.getModelAndView();
+        ModelAndViewAssert.assertViewName(mav, "studentInformation");
+        ModelAndViewAssert.assertModelAttributeAvailable(mav, "student");
+        ModelAndViewAssert.assertModelAttributeAvailable(mav, "mathAverage");
+        ModelAndViewAssert.assertModelAttributeAvailable(mav, "scienceAverage");
+        ModelAndViewAssert.assertModelAttributeAvailable(mav, "historyAverage");
+    }
+
+    @Test
+    public void studentInformationHttpRequestErrorPage() throws Exception {
+
+        assertTrue(studentDao.findById(2).isEmpty(), "Ensure student does not exist before test");
+
+        MvcResult mvcResult = this.mockMvc.perform(
+                        get("/studentInformation/{id}", 2))
+                .andExpect(status().isOk()).andReturn();
+
+        ModelAndView mav = mvcResult.getModelAndView();
+        ModelAndViewAssert.assertViewName(mav, "error");
     }
 }
