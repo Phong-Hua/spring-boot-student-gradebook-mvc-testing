@@ -23,7 +23,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@TestPropertySource("/application.properties") // load properties during testing as reference
+@TestPropertySource("/application-test.properties") // load properties during testing as reference
 @SpringBootTest
 public class StudentAndGradeServiceTest {
 
