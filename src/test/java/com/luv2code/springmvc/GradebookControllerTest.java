@@ -50,6 +50,9 @@ public class GradebookControllerTest {
     private StudentAndGradeService studentCreateServiceMock;
 
     @Autowired
+    private StudentAndGradeService studentService;
+
+    @Autowired
     private StudentDao studentDao;
 
     @Value("${sql.script.insert.student}")
@@ -207,6 +210,64 @@ public class GradebookControllerTest {
 
         MvcResult mvcResult = this.mockMvc.perform(
                         get("/studentInformation/{id}", 2))
+                .andExpect(status().isOk()).andReturn();
+
+        ModelAndView mav = mvcResult.getModelAndView();
+        ModelAndViewAssert.assertViewName(mav, "error");
+    }
+
+    @Test
+    public void createValidGrade() throws Exception {
+        assertTrue(studentDao.findById(1).isPresent(), "Ensure student exist before test");
+
+        GradebookCollegeStudent collegeStudent = studentService.studentInformation(1);
+
+        assertEquals(1, collegeStudent.getStudentGrades().getMathGradeResults().size(), "Ensure student has one math grade before action");
+
+        MvcResult mvcResult = this.mockMvc.perform(
+                    post("/grades")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .param("grade", "85.5")
+                            .param("gradeType", "math")
+                            .param("studentId", "1"))
+                .andExpect(status().isOk()).andReturn();
+
+        ModelAndView mav = mvcResult.getModelAndView();
+        ModelAndViewAssert.assertViewName(mav, "studentInformation");
+
+        collegeStudent = studentService.studentInformation(1);
+        assertEquals(2, collegeStudent.getStudentGrades().getMathGradeResults().size(), "Ensure new math grade is added");
+
+    }
+
+    @Test
+    public void createValidGradeHttpRequestStudentDoesNotExist() throws  Exception {
+
+        assertFalse(studentDao.findById(2).isPresent(), "Ensure student does not exist before test");
+
+        MvcResult mvcResult = this.mockMvc.perform(
+                        post("/grades")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .param("grade", "85.5")
+                                .param("gradeType", "math")
+                                .param("studentId", "2"))
+                .andExpect(status().isOk()).andReturn();
+
+        ModelAndView mav = mvcResult.getModelAndView();
+        ModelAndViewAssert.assertViewName(mav, "error");
+    }
+
+    @Test
+    public void createGradeForInvalidSubject() throws  Exception {
+
+        assertTrue(studentDao.findById(1).isPresent(), "Ensure student exists before test");
+
+        MvcResult mvcResult = this.mockMvc.perform(
+                        post("/grades")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .param("grade", "85.5")
+                                .param("gradeType", "literature")
+                                .param("studentId", "1"))
                 .andExpect(status().isOk()).andReturn();
 
         ModelAndView mav = mvcResult.getModelAndView();
