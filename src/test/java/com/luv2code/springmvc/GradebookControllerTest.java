@@ -2,6 +2,7 @@ package com.luv2code.springmvc;
 
 import com.luv2code.springmvc.models.CollegeStudent;
 import com.luv2code.springmvc.models.GradebookCollegeStudent;
+import com.luv2code.springmvc.repository.MathGradeDao;
 import com.luv2code.springmvc.repository.StudentDao;
 import com.luv2code.springmvc.service.StudentAndGradeService;
 import org.junit.jupiter.api.AfterEach;
@@ -26,6 +27,7 @@ import org.springframework.web.servlet.ModelAndView;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import static org.mockito.Mockito.when;
@@ -54,6 +56,9 @@ public class GradebookControllerTest {
 
     @Autowired
     private StudentDao studentDao;
+
+    @Autowired
+    private MathGradeDao mathGradesDao;
 
     @Value("${sql.script.insert.student}")
     private String sqlInsertStudent;
@@ -268,6 +273,49 @@ public class GradebookControllerTest {
                                 .param("grade", "85.5")
                                 .param("gradeType", "literature")
                                 .param("studentId", "1"))
+                .andExpect(status().isOk()).andReturn();
+
+        ModelAndView mav = mvcResult.getModelAndView();
+        ModelAndViewAssert.assertViewName(mav, "error");
+    }
+
+    @Test
+    public void deleteGradeHttpRequest() throws  Exception {
+
+        assertTrue(studentDao.findById(1).isPresent(), "Ensure student exists before test");
+        assertEquals(1, ((Collection) mathGradesDao.findGradeByStudentId(1)).size(), "Ensure student must have one grade before test");
+
+        MvcResult mvcResult = this.mockMvc.perform(
+                get("/grades/{id}/{gradeType}", 1, "math"))
+                .andExpect(status().isOk()).andReturn();
+
+
+        ModelAndView mav = mvcResult.getModelAndView();
+        ModelAndViewAssert.assertViewName(mav, "studentInformation");
+
+        assertTrue(((Collection) mathGradesDao.findGradeByStudentId(1)).isEmpty(), "Ensure student does not have any grade after delete");
+    }
+
+    @Test
+    public void deleteGradeHttpRequestInvalidGradeId() throws Exception {
+
+        assertTrue(studentDao.findById(1).isPresent(), "Ensure student exists before test");
+        assertFalse(mathGradesDao.existsById(2), "Ensure grade does not exist before test");
+
+        MvcResult mvcResult = this.mockMvc.perform(
+                        get("/grades/{id}/{gradeType}", 2, "math"))
+                .andExpect(status().isOk()).andReturn();
+
+        ModelAndView mav = mvcResult.getModelAndView();
+        ModelAndViewAssert.assertViewName(mav, "error");
+    }
+
+    @Test
+    public void deleteGradeHttpRequestInvalidSubject() throws Exception {
+        assertTrue(studentDao.findById(1).isPresent(), "Ensure student exists before test");
+
+        MvcResult mvcResult = this.mockMvc.perform(
+                        get("/grades/{id}/{gradeType}", 2, "literature"))
                 .andExpect(status().isOk()).andReturn();
 
         ModelAndView mav = mvcResult.getModelAndView();
